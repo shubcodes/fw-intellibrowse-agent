@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # Backend API service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: server-build
+    container_name: intellibrowse-api
+    volumes:
+      - ./src:/app/src
+      - ./.env:/app/.env
+      - ./node_modules:/app/node_modules
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+    command: npm run dev
+    restart: unless-stopped
+
+  # Frontend React client
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.client
+    container_name: intellibrowse-client
+    volumes:
+      - ./client/src:/app/src
+      - ./client/public:/app/public
+      - ./client/node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3001/api
+      - WDS_SOCKET_PORT=0
+    command: npm start
+    depends_on:
+      - api
+    restart: unless-stopped
+
+networks:
+  default:
+    name: intellibrowse-network 

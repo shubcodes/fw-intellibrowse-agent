@@ -1,0 +1,46 @@
+{
+  "name": "intellibrowse-agent",
+  "version": "0.1.0",
+  "description": "Autonomous AI-driven web agent capable of performing complex web navigation tasks",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "client": "cd client && npm start",
+    "server": "nodemon src/index.js",
+    "dev:all": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "keywords": [
+    "ai",
+    "web",
+    "agent",
+    "browser",
+    "automation",
+    "fireworks-ai",
+    "deepseek",
+    "stagehand",
+    "browserbase",
+    "omniparser"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@browserbasehq/stagehand": "^0.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "form-data": "^4.0.0",
+    "node-fetch": "^3.3.2",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+} 
