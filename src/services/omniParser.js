@@ -8,6 +8,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Check if we should use mock implementation
+const USE_MOCK = process.env.USE_MOCK === 'true' || !process.env.HUGGINGFACE_API_KEY;
+
 export class OmniParser {
   constructor(config = {}) {
     this.config = {
@@ -28,6 +31,11 @@ export class OmniParser {
     }
 
     try {
+      if (USE_MOCK) {
+        console.log('Using mock OmniParser implementation');
+        return this.generateMockParserResult();
+      }
+      
       const formData = new FormData();
       formData.append('image', screenshot, { filename: 'screenshot.png' });
       
@@ -48,8 +56,132 @@ export class OmniParser {
       return this.transformResult(result);
     } catch (error) {
       console.error('Error parsing screenshot with OmniParser:', error);
+      
+      if (USE_MOCK) {
+        // Return mock data on error when in mock mode
+        return this.generateMockParserResult();
+      }
+      
       throw error;
     }
+  }
+
+  /**
+   * Generate mock parser result for demo purposes
+   * @returns {Object} - Mock UI element data
+   */
+  generateMockParserResult() {
+    // Mock interactable elements
+    const interactableElements = [
+      {
+        id: 'button-1',
+        type: 'button',
+        text: 'Search',
+        boundingBox: { x: 500, y: 200, width: 80, height: 40, type: 'button' },
+        isInteractable: true,
+        confidence: 0.98,
+        description: 'Search button',
+      },
+      {
+        id: 'input-1',
+        type: 'input',
+        text: '',
+        boundingBox: { x: 200, y: 200, width: 280, height: 40, type: 'input' },
+        isInteractable: true,
+        confidence: 0.96,
+        description: 'Search input field',
+      },
+      {
+        id: 'link-1',
+        type: 'link',
+        text: 'Home',
+        boundingBox: { x: 20, y: 20, width: 60, height: 30, type: 'link' },
+        isInteractable: true,
+        confidence: 0.95,
+        description: 'Home link',
+      },
+      {
+        id: 'link-2',
+        type: 'link',
+        text: 'About',
+        boundingBox: { x: 90, y: 20, width: 60, height: 30, type: 'link' },
+        isInteractable: true,
+        confidence: 0.94,
+        description: 'About link',
+      },
+      {
+        id: 'link-3',
+        type: 'link',
+        text: 'Contact',
+        boundingBox: { x: 160, y: 20, width: 70, height: 30, type: 'link' },
+        isInteractable: true,
+        confidence: 0.93,
+        description: 'Contact link',
+      }
+    ];
+
+    // Mock text elements
+    const textElements = [
+      {
+        id: 'text-1',
+        text: 'Welcome to Example Website',
+        boundingBox: { x: 200, y: 100, width: 400, height: 40 },
+        confidence: 0.99,
+      },
+      {
+        id: 'text-2',
+        text: 'Search:',
+        boundingBox: { x: 150, y: 200, width: 50, height: 40 },
+        confidence: 0.98,
+      },
+      {
+        id: 'text-3',
+        text: 'Featured Content:',
+        boundingBox: { x: 50, y: 300, width: 150, height: 30 },
+        confidence: 0.97,
+      },
+      {
+        id: 'text-4',
+        text: 'Item 1: First featured content',
+        boundingBox: { x: 70, y: 340, width: 300, height: 25 },
+        confidence: 0.96,
+      },
+      {
+        id: 'text-5',
+        text: 'Item 2: Second featured content',
+        boundingBox: { x: 70, y: 375, width: 300, height: 25 },
+        confidence: 0.95,
+      },
+      {
+        id: 'text-6',
+        text: 'Item 3: Third featured content',
+        boundingBox: { x: 70, y: 410, width: 300, height: 25 },
+        confidence: 0.94,
+      }
+    ];
+
+    return {
+      interactableElements,
+      textElements,
+      visualHierarchy: {
+        root: {
+          type: 'page',
+          children: [
+            { id: 'link-1', type: 'link' },
+            { id: 'link-2', type: 'link' },
+            { id: 'link-3', type: 'link' },
+            { id: 'text-1', type: 'text' },
+            { id: 'text-2', type: 'text' },
+            { id: 'input-1', type: 'input' },
+            { id: 'button-1', type: 'button' },
+            { id: 'text-3', type: 'text' },
+            { id: 'text-4', type: 'text' },
+            { id: 'text-5', type: 'text' },
+            { id: 'text-6', type: 'text' },
+          ]
+        }
+      }
+    };
   }
 
   /**

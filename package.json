@@ -27,7 +27,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@browserbasehq/stagehand": "^0.1.0",
+    "@browserbasehq/stagehand": "*",
+    "canvas": "^3.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
@@ -43,4 +44,4 @@
   "engines": {
     "node": ">=18.0.0"
   }
-} 
+}

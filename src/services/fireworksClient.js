@@ -8,6 +8,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Check if we should use mock implementation
+const USE_MOCK = process.env.USE_MOCK === 'true' || !process.env.FIREWORKS_API_KEY;
+
 export class FireworksClient {
   constructor(config = {}) {
     this.apiKey = config.apiKey || process.env.FIREWORKS_API_KEY;
@@ -32,6 +35,11 @@ export class FireworksClient {
     const requestOptions = { ...defaultOptions, ...options };
 
     try {
+      if (USE_MOCK) {
+        console.log('Using mock FireworksAI implementation');
+        return this.generateMockCompletion(requestOptions);
+      }
+
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -49,8 +57,71 @@ export class FireworksClient {
       return await response.json();
     } catch (error) {
       console.error('Error calling Fireworks API:', error);
+      
+      if (USE_MOCK) {
+        return this.generateMockCompletion(requestOptions);
+      }
+      
       throw error;
     }
+  }
+
+  /**
+   * Generate a mock completion response for demo purposes
+   * @param {Object} options - Chat completion options
+   * @returns {Object} - Mock completion response
+   */
+  generateMockCompletion(options) {
+    // Extract the latest user message
+    const userMessage = options.messages.find(m => m.role === 'user')?.content || '';
+    
+    // Generate response based on user message content
+    let responseContent = '';
+    
+    if (userMessage.toLowerCase().includes('search')) {
+      responseContent = `Thought: I need to search for information on the web.
+Action: browser.search(query="artificial intelligence news")`;
+    } else if (userMessage.toLowerCase().includes('navigate') || userMessage.toLowerCase().includes('go to')) {
+      responseContent = `Thought: I need to navigate to a specific website.
+Action: browser.open(url="https://www.example.com")`;
+    } else if (userMessage.toLowerCase().includes('click')) {
+      responseContent = `Thought: I need to click on an element on the page.
+Action: browser.click(selector="Sign in button")`;
+    } else if (userMessage.toLowerCase().includes('type') || userMessage.toLowerCase().includes('enter')) {
+      responseContent = `Thought: I need to enter some text into a field.
+Action: browser.type(selector="Email field", text="example@example.com")`;
+    } else if (userMessage.toLowerCase().includes('screenshot')) {
+      responseContent = `Thought: I need to take a screenshot of the current page.
+Action: browser.screenshot()`;
+    } else {
+      responseContent = `Thought: I need to understand what the user wants me to do.
+I think the user is asking me to perform a web task. Let me break it down into steps.
+
+First, I'll need to search for some information.
+Action: browser.search(query="example search query")`;
+    }
+    
+    return {
+      id: 'mock-completion-' + Date.now(),
+      object: 'chat.completion',
+      created: Math.floor(Date.now() / 1000),
+      model: this.model,
+      choices: [
+        {
+          index: 0,
+          message: {
+            role: 'assistant',
+            content: responseContent
+          },
+          finish_reason: 'stop'
+        }
+      ],
+      usage: {
+        prompt_tokens: 100,
+        completion_tokens: responseContent.length / 4, // Rough approximation
+        total_tokens: 100 + (responseContent.length / 4)
+      }
+    };
   }
 
   /**
@@ -71,6 +142,12 @@ export class FireworksClient {
     const requestOptions = { ...defaultOptions, ...options };
 
     try {
+      if (USE_MOCK) {
+        console.log('Using mock FireworksAI streaming implementation');
+        yield* this.generateMockCompletionStream(requestOptions);
+        return;
+      }
+
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -114,7 +191,74 @@ export class FireworksClient {
       }
     } catch (error) {
       console.error('Error streaming from Fireworks API:', error);
+      
+      if (USE_MOCK) {
+        yield* this.generateMockCompletionStream(requestOptions);
+        return;
+      }
+      
       throw error;
+    }
+  }
+
+  /**
+   * Generate a mock streaming completion for demo purposes
+   * @param {Object} options - Chat completion options
+   * @returns {AsyncGenerator} - Generator yielding mock response chunks
+   */
+  async *generateMockCompletionStream(options) {
+    // Extract the latest user message
+    const userMessage = options.messages.find(m => m.role === 'user')?.content || '';
+    
+    // Generate response based on user message content
+    let responseContent = '';
+    
+    if (userMessage.toLowerCase().includes('search')) {
+      responseContent = `Thought: I need to search for information on the web.
+Action: browser.search(query="artificial intelligence news")`;
+    } else if (userMessage.toLowerCase().includes('navigate') || userMessage.toLowerCase().includes('go to')) {
+      responseContent = `Thought: I need to navigate to a specific website.
+Action: browser.open(url="https://www.example.com")`;
+    } else if (userMessage.toLowerCase().includes('click')) {
+      responseContent = `Thought: I need to click on an element on the page.
+Action: browser.click(selector="Sign in button")`;
+    } else if (userMessage.toLowerCase().includes('type') || userMessage.toLowerCase().includes('enter')) {
+      responseContent = `Thought: I need to enter some text into a field.
+Action: browser.type(selector="Email field", text="example@example.com")`;
+    } else if (userMessage.toLowerCase().includes('screenshot')) {
+      responseContent = `Thought: I need to take a screenshot of the current page.
+Action: browser.screenshot()`;
+    } else {
+      responseContent = `Thought: I need to understand what the user wants me to do.
+I think the user is asking me to perform a web task. Let me break it down into steps.
+
+First, I'll need to search for some information.
+Action: browser.search(query="example search query")`;
+    }
+    
+    // Split response into chunks for streaming simulation
+    const chunks = responseContent.split(/(?<=\n)/);
+    
+    for (let i = 0; i < chunks.length; i++) {
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      yield {
+        id: 'mock-stream-' + Date.now(),
+        object: 'chat.completion.chunk',
+        created: Math.floor(Date.now() / 1000),
+        model: this.model,
+        choices: [
+          {
+            index: 0,
+            delta: {
+              role: i === 0 ? 'assistant' : undefined,
+              content: chunks[i]
+            },
+            finish_reason: i === chunks.length - 1 ? 'stop' : null
+          }
+        ]
+      };
     }
   }
 
