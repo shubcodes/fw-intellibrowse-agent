@@ -68,7 +68,3 @@ Simply provide a natural language instruction, and the agent will:
 2. Execute the necessary browser actions
 3. Extract the required information
 4. Present the results in a structured format
-
-## License
-
-MIT 
