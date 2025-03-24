@@ -49,14 +49,39 @@ export class AgentService {
   initializeToolRegistry() {
     return {
       // Browser automation tools
-      'browser.open': this.browserAutomation.open.bind(this.browserAutomation),
-      'browser.search': this.browserAutomation.search.bind(this.browserAutomation),
-      'browser.click': this.browserAutomation.click.bind(this.browserAutomation),
-      'browser.type': this.browserAutomation.type.bind(this.browserAutomation),
-      'browser.screenshot': this.browserAutomation.screenshot.bind(this.browserAutomation),
-      'browser.getHtml': this.browserAutomation.getHtml.bind(this.browserAutomation),
-      'browser.extractData': this.browserAutomation.extractData.bind(this.browserAutomation),
-      'browser.observe': this.browserAutomation.observe.bind(this.browserAutomation),
+      'browser.open': async (...args) => {
+        // Ensure browser is initialized before calling the method
+        await this.ensureBrowserInitialized();
+        return this.browserAutomation.open(...args);
+      },
+      'browser.search': async (...args) => {
+        await this.ensureBrowserInitialized();
+        return this.browserAutomation.search(...args);
+      },
+      'browser.click': async (...args) => {
+        await this.ensureBrowserInitialized();
+        return this.browserAutomation.click(...args);
+      },
+      'browser.type': async (...args) => {
+        await this.ensureBrowserInitialized();
+        return this.browserAutomation.type(...args);
+      },
+      'browser.screenshot': async (...args) => {
+        await this.ensureBrowserInitialized();
+        return this.browserAutomation.screenshot(...args);
+      },
+      'browser.getHtml': async (...args) => {
+        await this.ensureBrowserInitialized();
+        return this.browserAutomation.getHtml(...args);
+      },
+      'browser.extractData': async (...args) => {
+        await this.ensureBrowserInitialized();
+        return this.browserAutomation.extractData(...args);
+      },
+      'browser.observe': async (...args) => {
+        await this.ensureBrowserInitialized();
+        return this.browserAutomation.observe(...args);
+      },
       
       // OmniParser tools
       'parser.parseScreenshot': async ({ screenshot }) => {
@@ -82,7 +107,8 @@ export class AgentService {
   }
 
   /**
-   * Initialize all necessary services
+   * Initialize all necessary services 
+   * (no longer automatically called at server startup)
    * @returns {Promise<void>}
    */
   async initialize() {
@@ -90,12 +116,23 @@ export class AgentService {
       return;
     }
     
+    // No longer initializing browser here
+    // Just mark the service as initialized
+    this.initialized = true;
+    console.log('Agent service initialized without browser (lazy initialization)');
+  }
+
+  /**
+   * Ensure browser is initialized when needed
+   * @returns {Promise<void>}
+   */
+  async ensureBrowserInitialized() {
     try {
-      await this.browserAutomation.initialize();
-      this.initialized = true;
-      console.log('Agent service initialized successfully');
+      if (!this.browserAutomation.initialized) {
+        await this.browserAutomation.initialize();
+      }
     } catch (error) {
-      console.error('Error initializing agent service:', error);
+      console.error('Error initializing browser automation on demand:', error);
       throw error;
     }
   }
@@ -199,6 +236,7 @@ export class AgentService {
    */
   async getScreenshot() {
     await this.ensureInitialized();
+    await this.ensureBrowserInitialized();
     return this.browserAutomation.screenshot();
   }
 
@@ -246,7 +284,9 @@ export class AgentService {
    */
   async cleanup() {
     try {
-      await this.browserAutomation.close();
+      if (this.browserAutomation.initialized) {
+        await this.browserAutomation.close();
+      }
       this.sessions.clear();
       this.initialized = false;
       console.log('Agent service cleaned up');

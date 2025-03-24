@@ -148,6 +148,7 @@ Action: browser.search(query="example search query")`;
         return;
       }
 
+      // Make the API request using fetch
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: 'POST',
         headers: {
@@ -162,30 +163,22 @@ Action: browser.search(query="example search query")`;
         throw new Error(`Fireworks API error: ${error.message || response.statusText}`);
       }
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder('utf-8');
+      // Get the response as text and manually process line by line
+      // This fixes the "getReader is not a function" error
+      const text = await response.text();
+      const lines = text.split('\n').filter(line => line.trim() !== '');
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          break;
-        }
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n').filter(line => line.trim() !== '');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              return;
-            }
-            try {
-              const parsed = JSON.parse(data);
-              yield parsed;
-            } catch (e) {
-              console.warn('Error parsing streaming data:', e);
-            }
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6);
+          if (data === '[DONE]') {
+            return;
+          }
+          try {
+            const parsed = JSON.parse(data);
+            yield parsed;
+          } catch (e) {
+            console.warn('Error parsing streaming data:', e);
           }
         }
       }

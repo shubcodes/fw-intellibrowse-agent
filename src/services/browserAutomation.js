@@ -116,7 +116,7 @@ export class BrowserAutomation {
   }
 
   /**
-   * Perform a web search
+   * Search for a query on the web
    * @param {string} query - Search query
    * @returns {Promise<Object>} - Search results
    */
@@ -124,6 +124,16 @@ export class BrowserAutomation {
     await this.ensureInitialized();
     
     try {
+      // Ensure query is a string
+      if (typeof query !== 'string') {
+        // Handle object case (which might come from tool parameters)
+        if (query && typeof query === 'object' && query.query) {
+          query = query.query;
+        } else {
+          query = String(query || '');
+        }
+      }
+      
       if (USE_MOCK) {
         this.mockCurrentUrl = 'https://www.google.com/search?q=' + encodeURIComponent(query);
         this.mockTitle = query + ' - Google Search';
